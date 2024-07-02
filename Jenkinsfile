@@ -16,22 +16,17 @@ pipeline {
         }
       }
     }
-    stage('SonarQube Analysis') {
-      steps {
-        script {
-          def scannerHome = tool 'SonarQube Scanner 6.0.0.4432'
-          withSonarQubeEnv('sonarqube') {
-            sh """
-            ${scannerHome}/bin/sonar-scanner \
-              -Dsonar.projectKey=jenkins \
-              -Dsonar.sources=src \
-              -Dsonar.host.url=http://192.168.6.113:9000 \
-              -Dsonar.token=sqp_1d7dfc63f3aa4bd51c66daa32f52a3d9a5d70436
-            """
-          }
-        }
-      }
+    node {
+  stage('SCM') {
+    checkout scm
+  }
+  stage('SonarQube Analysis') {
+    def scannerHome = tool 'sonar';
+    withSonarQubeEnv(sonar1) {
+      sh "${scannerHome}/bin/sonar-scanner"
     }
+  }
+}
   
     stage("Quality Gate") {
       steps {
