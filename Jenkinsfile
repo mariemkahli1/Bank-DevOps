@@ -1,7 +1,7 @@
 pipeline {
   agent any
   environment {
-    SONARQUBE = 'sonarqube'
+    SONARQUBE = 'sonar1'
   }
   stages {
     stage('PHPStan Analysis') {
