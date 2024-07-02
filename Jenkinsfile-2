@@ -16,11 +16,6 @@ pipeline {
         }
 
         stage('Create .env File') {
-            when {
-                expression {
-                    currentBuild.result == 'SUCCESS'
-                }
-            }
             steps {
                 withCredentials([string(credentialsId: 'db_credentials', variable: 'DB_CREDENTIALS')]) {
                     writeFile file: 'src/.env', text: "${DB_CREDENTIALS}"
@@ -29,11 +24,6 @@ pipeline {
         }
 
         stage('Build Docker Image') {
-            when {
-                expression {
-                    currentBuild.result == 'SUCCESS'
-                }
-            }
             steps {
                 sh 'docker build -t flare-bank .'
             }
