@@ -1,46 +1,54 @@
 pipeline {
-  agent any
-  environment {
-    SONARQUBE = 'sonar1'
-  }
-  stages {
-    stage('PHPStan Analysis') {
-      steps {
-        script {
-          sh 'composer require --dev phpstan/phpstan'
-          try {
-            sh 'vendor/bin/phpstan analyze src -l 6 > phpstan_errors.txt'
-          } catch (err) {
-            echo "PHPStan analysis encountered errors but continuing..."
-          }
-        }
-      }
-    }
-    node {
-  stage('SCM') {
-    checkout scm
-  }
-  stage('SonarQube Analysis') {
-    def scannerHome = tool 'sonar';
-    withSonarQubeEnv(sonar1) {
-      sh "${scannerHome}/bin/sonar-scanner"
-    }
-  }
-}
-  
-    stage("Quality Gate") {
-      steps {
-        script {
-          try {
-            waitForQualityGate abortPipeline: true
-          } catch (err) {
-            echo "Quality Gate check failed: ${err}"
-          }
-        }
-      }
+    agent any
+
+    environment {
+        SONARQUBE = 'sonar1'
     }
 
-    stage('Lint Dockerfile') {
+    stages {
+        stage('PHPStan Analysis') {
+            steps {
+                script {
+                    sh 'composer require --dev phpstan/phpstan'
+                    try {
+                        sh 'vendor/bin/phpstan analyze src -l 6 > phpstan_errors.txt'
+                    } catch (err) {
+                        echo "PHPStan analysis encountered errors but continuing..."
+                    }
+                }
+            }
+        }
+
+        stage('SCM') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                script {
+                    def scannerHome = tool 'sonar';
+                    withSonarQubeEnv('sonar1') {
+                        sh "${scannerHome}/bin/sonar-scanner"
+                    }
+                }
+            }
+        }
+
+        stage("Quality Gate") {
+            steps {
+                script {
+                    try {
+                        waitForQualityGate abortPipeline: true
+                    } catch (err) {
+                        echo "Quality Gate check failed: ${err}"
+                    }
+                }
+            }
+        }
+
+        stage('Lint Dockerfile') {
             steps {
                 script {
                     def hadolintOutput = sh(returnStdout: true, script: 'hadolint --config hadolint.yaml Dockerfile || true').trim()
@@ -77,15 +85,15 @@ pipeline {
                         }
                         sh 'docker rmi -f flare-bank'
                     }
+                    sh 'docker build -t flare-bank .'
                 }
-                sh 'docker build -t flare-bank .'
             }
         }
-  
-  }
-  post {
-    always {
-      echo 'Pipeline has finished.'
     }
-  }
+
+    post {
+        always {
+            echo 'Pipeline has finished.'
+        }
+    }
 }
