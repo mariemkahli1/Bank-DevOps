@@ -29,6 +29,17 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
+                script {
+                    def imageExists = sh(script: 'docker images -q flare-bank', returnStdout: true).trim()
+                    if (imageExists) {
+                        def containerIds = sh(script: 'docker ps -a -q --filter ancestor=flare-bank', returnStdout: true).trim()
+                        if (containerIds) {
+                            sh 'docker stop $(docker ps -a -q --filter ancestor=flare-bank)'
+                            sh 'docker rm $(docker ps -a -q --filter ancestor=flare-bank)'
+                        }
+                        sh 'docker rmi -f flare-bank'
+                    }
+                }
                 sh 'docker build -t flare-bank .'
             }
         }
