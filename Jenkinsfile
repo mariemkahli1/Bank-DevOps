@@ -7,13 +7,10 @@ pipeline {
     stage('PHPStan Analysis') {
       steps {
         script {
-          // Install PHPStan if not already installed
           sh 'composer require --dev phpstan/phpstan'
-          // Run PHPStan analysis and save output to a file
           try {
             sh 'vendor/bin/phpstan analyze src -l 6 > phpstan_errors.txt'
           } catch (err) {
-            // Catch any errors but continue the pipeline
             echo "PHPStan analysis encountered errors but continuing..."
           }
         }
@@ -47,6 +44,48 @@ pipeline {
         }
       }
     }
+
+    stage('Lint Dockerfile') {
+            steps {
+                script {
+                    def hadolintOutput = sh(returnStdout: true, script: 'hadolint --config hadolint.yaml Dockerfile || true').trim()
+                    if (hadolintOutput) {
+                        error "Error: Dockerfile linting failed:\n${hadolintOutput}"
+                    } else {
+                        echo 'Dockerfile linting passed'
+                    }
+                }
+            }
+        }
+
+        stage('Create .env File') {
+            steps {
+                withCredentials([string(credentialsId: 'db_credentials', variable: 'DB_CREDENTIALS')]) {
+                    script {
+                        def envVariables = DB_CREDENTIALS.split(' ')
+                        def envContent = envVariables.join('\n')
+                        writeFile file: 'src/.env', text: envContent
+                    }
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    def imageExists = sh(script: 'docker images -q flare-bank', returnStdout: true).trim()
+                    if (imageExists) {
+                        def containerIds = sh(script: 'docker ps -a -q --filter ancestor=flare-bank', returnStdout: true).trim()
+                        if (containerIds) {
+                            sh 'docker stop $(docker ps -a -q --filter ancestor=flare-bank)'
+                            sh 'docker rm $(docker ps -a -q --filter ancestor=flare-bank)'
+                        }
+                        sh 'docker rmi -f flare-bank'
+                    }
+                }
+                sh 'docker build -t flare-bank .'
+            }
+        }
   
   }
   post {

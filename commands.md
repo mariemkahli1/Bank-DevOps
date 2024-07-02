@@ -1,13 +1,13 @@
 ## build the image
 
 ```bash
-docker build -t your-image-name .
+docker build -t flare-bank .
 ```
 
 ## run the image
 
 ```bash
-docker run -p 80:80 --name my-php-container your-image-name
+docker run -p 80:80 --name flare-bank-container flare-bank
 ```
 
 ## hadolint
