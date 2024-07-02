@@ -1,0 +1,42 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Lint Dockerfile') {
+            steps {
+                script {
+                    def hadolintOutput = sh(returnStdout: true, script: 'hadolint --config hadolint.yaml Dockerfile || true').trim()
+                    if (hadolintOutput) {
+                        error "Error: Dockerfile linting failed:\n${hadolintOutput}"
+                    } else {
+                        echo 'Dockerfile linting passed'
+                    }
+                }
+            }
+        }
+
+        stage('Create .env File') {
+            when {
+                expression {
+                    currentBuild.result == 'SUCCESS'
+                }
+            }
+            steps {
+                withCredentials([string(credentialsId: 'db_credentials', variable: 'DB_CREDENTIALS')]) {
+                    writeFile file: 'src/.env', text: "${DB_CREDENTIALS}"
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            when {
+                expression {
+                    currentBuild.result == 'SUCCESS'
+                }
+            }
+            steps {
+                sh 'docker build -t flare-bank .'
+            }
+        }
+    }
+}
