@@ -18,7 +18,11 @@ pipeline {
         stage('Create .env File') {
             steps {
                 withCredentials([string(credentialsId: 'db_credentials', variable: 'DB_CREDENTIALS')]) {
-                    writeFile file: 'src/.env', text: "${DB_CREDENTIALS}"
+                    script {
+                        def envVariables = DB_CREDENTIALS.split(' ')
+                        def envContent = envVariables.join('\n')
+                        writeFile file: 'src/.env', text: envContent
+                    }
                 }
             }
         }
