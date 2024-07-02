@@ -25,7 +25,7 @@ pipeline {
             ${scannerHome}/bin/sonar-scanner \
               -Dsonar.projectKey=jenkins \
               -Dsonar.sources=src \
-              -Dsonar.host.url=http://192.168.1.16:9000 \
+              -Dsonar.host.url=http://192.168.6.113:9000 \
               -Dsonar.token=sqp_1d7dfc63f3aa4bd51c66daa32f52a3d9a5d70436
             """
           }
