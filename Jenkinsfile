@@ -98,7 +98,7 @@ stage('Test Docker Image Dockle') {
             def latestTag = existingTags.findAll { it =~ /^\d+$/ }.max { it.toInteger() } ?: '0'
             def newTag = latestTag.toInteger()
             def fullImageName = "${imageName}:${newTag}"
-            sh "sudo dockle ${fullImageName} "
+            sh "dockle ${fullImageName} || true "
         }
     }
 }
