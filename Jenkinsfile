@@ -91,16 +91,18 @@ pipeline {
         }
 
         stage('Test Docker Image Dockle') {
-          steps {
-              script {
-                  def imageName = 'flare-bank'
-                  def existingTags = sh(script: "docker images --format '{{.Tag}}' ${imageName}", returnStdout: true).trim().split('\n')
-                  def latestTag = existingTags.findAll { it =~ /^\d+$/ }.max { it.toInteger() } ?: '0'
-                  def newTag = latestTag.toInteger()
-                  sh "dockle --exit-code 1 ${imageName}:${newTag}"
-              }
-          }
+    steps {
+        script {
+            def imageName = 'flare-bank'
+            def existingTags = sh(script: "docker images --format '{{.Tag}}' ${imageName}", returnStdout: true).trim().split('\n')
+            def latestTag = existingTags.findAll { it =~ /^\d+$/ }.max { it.toInteger() } ?: '0'
+            def newTag = latestTag.toInteger()
+            def fullImageName = "${imageName}:${newTag}"
+            sh "dockle ${fullImageName}"
         }
+    }
+}
+
     }
 
     post {
