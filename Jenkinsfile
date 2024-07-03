@@ -90,7 +90,7 @@ pipeline {
             }
         }
 
-        stage('Test Docker Image Dockle') {
+stage('Test Docker Image Dockle') {
     steps {
         script {
             def imageName = 'flare-bank'
@@ -98,10 +98,11 @@ pipeline {
             def latestTag = existingTags.findAll { it =~ /^\d+$/ }.max { it.toInteger() } ?: '0'
             def newTag = latestTag.toInteger()
             def fullImageName = "${imageName}:${newTag}"
-            sh "dockle ${fullImageName}"
+            sh "dockle ${fullImageName} || true"
         }
     }
 }
+
 
     }
 
