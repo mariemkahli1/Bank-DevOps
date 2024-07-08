@@ -107,7 +107,7 @@ stage('Test Security Vulnerabilities with Trivy') {
     steps {
         script {
             def imageName = 'flare-bank'
-            def existingTags = sh(script: "docker images --format '{{.Tag}}' ${imageName}", returnStdout: true).trim().split('\n')
+            def existingTags = sh(script: "sudo docker images --format '{{.Tag}}' ${imageName}", returnStdout: true).trim().split('\n')
             if (existingTags.size() == 0 || existingTags.every { it.isEmpty() }) {
                 error "No tags found for image ${imageName}"
             }
@@ -115,10 +115,11 @@ stage('Test Security Vulnerabilities with Trivy') {
             if (latestTag == null) {
                 error "No numeric tags found for image ${imageName}"
             }
-            sh "trivy image --severity CRITICAL ${imageName}:${latestTag}"
+            sh "sudo trivy image --severity CRITICAL ${imageName}:${latestTag}"
         }
     }
 }
+
 
 
 
