@@ -103,23 +103,23 @@ stage('Test Docker Image Dockle') {
     }
 }
 
-    stage('Test Security Vulnerabilities with Trivy') {
+stage('Test Security Vulnerabilities with Trivy') {
     steps {
         script {
             def imageName = 'flare-bank'
             def existingTags = sh(script: "docker images --format '{{.Tag}}' ${imageName}", returnStdout: true).trim().split('\n')
-            if (existingTags.size() == 0) {
+            if (existingTags.size() == 0 || existingTags.every { it.isEmpty() }) {
                 error "No tags found for image ${imageName}"
             }
-            def latestTag = existingTags.findAll { it =~ /^\d+$/ }.max { it.toInteger() } ?: '0'
-            def newTag = latestTag.toInteger()
-            if (!existingTags.contains(newTag.toString())) {
-                error "Tag ${newTag} does not exist for image ${imageName}"
+            def latestTag = existingTags.findAll { it =~ /^\d+$/ }.max { it.toInteger() }
+            if (latestTag == null) {
+                error "No numeric tags found for image ${imageName}"
             }
-            sh "trivy image --severity CRITICAL ${imageName}:${newTag}"
+            sh "trivy image --severity CRITICAL ${imageName}:${latestTag}"
         }
     }
 }
+
 
 
         
