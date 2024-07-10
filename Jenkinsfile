@@ -137,7 +137,7 @@ pipeline {
 
             // Démarrer le conteneur avec le dernier tag trouvé
             sh "docker run -d --network=${env.NETWORK_NAME} --name ${env.CONTAINER_NAME} ${env.IMAGE_NAME}:${latestTag}"
-            sleep 10
+            //sleep 10
         }
     }
 }
