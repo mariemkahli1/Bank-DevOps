@@ -118,7 +118,7 @@ pipeline {
             }
         }
 
-        stage('Run Docker Container') {
+       stage('Run Docker Container') {
             steps {
                 script {
                     // Vérifier si le réseau existe, sinon le créer
@@ -130,8 +130,10 @@ pipeline {
                     }
 
                     // Vérifier les tags existants de l'image
-                    def existingTags = sh(script: "docker images --format '{{.Tag}}' ${env.IMAGE_NAME}", returnStdout: true).trim().split('\n')
-                    def latestTag = existingTags.findAll { it.isNumber() }.collect { it.toInteger() }.max() ?: 0
+                    def latestTag = sh(script: "docker images --format '{{.Tag}}' ${env.IMAGE_NAME} | grep '^[0-9]\\+' | sort -nr | head -n 1", returnStdout: true).trim()
+                    if (!latestTag) {
+                        latestTag = '0'
+                    }
 
                     // Démarrer le conteneur
                     sh "docker run -d --network=${env.NETWORK_NAME} --name ${env.CONTAINER_NAME} ${env.IMAGE_NAME}:${latestTag}"
