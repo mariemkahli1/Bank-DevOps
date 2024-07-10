@@ -51,7 +51,7 @@ pipeline {
             }
         }
 
-        stage('Lint Dockerfile') {
+        stage('Hadolint Dockerfile analysis') {
             steps {
                 script {
                     def hadolintOutput = sh(returnStdout: true, script: 'hadolint --config hadolint.yaml Dockerfile || true').trim()
@@ -93,7 +93,7 @@ pipeline {
             }
         }
 
-        stage('Test Docker Image Dockle') {
+        stage('Dockle Docker Image Test') {
             steps {
                 script {
                     def imageName = 'flare-bank'
@@ -106,7 +106,7 @@ pipeline {
             }
         }
 
-        stage('Test Security Vulnerabilities with Trivy') {
+        stage('Test Security Trivy') {
             steps {
                 script {
                     def imageName = 'flare-bank'
