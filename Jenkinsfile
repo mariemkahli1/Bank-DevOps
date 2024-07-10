@@ -116,6 +116,27 @@ stage('Test Security Vulnerabilities with Trivy') {
         }
 
 
+          stage('Run Docker Container') {
+            steps {
+                script {
+                    def networkExists = sh(script: "docker network ls --filter name=${NETWORK_NAME} -q", returnStdout: true).trim()
+                    if (!networkExists) {
+                        sh "docker network create ${NETWORK_NAME}"
+                    } else {
+                        echo "Network ${NETWORK_NAME} already exists."
+                    }
+
+                    def imageName = 'flare-bank'
+                    def existingTags = sh(script: "docker images --format '{{.Tag}}' ${imageName}", returnStdout: true).trim().split('\n')
+                    def latestTag = existingTags.findAll { it.isNumber() }.collect { it.toInteger() }.max() ?: 0
+
+                    sh "docker run -d --network=${NETWORK_NAME} --name ${CONTAINER_NAME} ${imageName}:${latestTag}"
+                    sleep 10
+                }
+            }
+        }
+        
+
 
 
         
