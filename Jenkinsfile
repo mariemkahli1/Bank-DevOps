@@ -3,6 +3,9 @@ pipeline {
 
     environment {
         SONARQUBE = 'sonar1'
+        CONTAINER_NAME = 'flare-container'
+        IMAGE_NAME = 'flare-bank'
+        NETWORK_NAME = 'bridge'
     }
 
     stages {
@@ -116,25 +119,29 @@ stage('Test Security Vulnerabilities with Trivy') {
         }
 
 
-          stage('Run Docker Container') {
+         stages {
+        stage('Run Docker Container') {
             steps {
                 script {
-                    def networkExists = sh(script: "docker network ls --filter name=${NETWORK_NAME} -q", returnStdout: true).trim()
+                    // Vérifier si le réseau existe, sinon le créer
+                    def networkExists = sh(script: "docker network ls --filter name=${env.NETWORK_NAME} -q", returnStdout: true).trim()
                     if (!networkExists) {
-                        sh "docker network create ${NETWORK_NAME}"
+                        sh "docker network create ${env.NETWORK_NAME}"
                     } else {
-                        echo "Network ${NETWORK_NAME} already exists."
+                        echo "Network ${env.NETWORK_NAME} already exists."
                     }
 
-                    def imageName = 'flare-bank'
-                    def existingTags = sh(script: "docker images --format '{{.Tag}}' ${imageName}", returnStdout: true).trim().split('\n')
+                    // Vérifier les tags existants de l'image
+                    def existingTags = sh(script: "docker images --format '{{.Tag}}' ${env.IMAGE_NAME}", returnStdout: true).trim().split('\n')
                     def latestTag = existingTags.findAll { it.isNumber() }.collect { it.toInteger() }.max() ?: 0
 
-                    sh "docker run -d --network=${NETWORK_NAME} --name ${CONTAINER_NAME} ${imageName}:${latestTag}"
+                    // Démarrer le conteneur
+                    sh "docker run -d --network=${env.NETWORK_NAME} --name ${env.CONTAINER_NAME} ${env.IMAGE_NAME}:${latestTag}"
                     sleep 10
                 }
             }
         }
+    }
         
 
 
