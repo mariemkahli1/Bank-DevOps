@@ -93,20 +93,20 @@ pipeline {
             }
         }
 
-stage('Test Docker Image Dockle') {
-    steps {
-        script {
-            def imageName = 'flare-bank'
-            def existingTags = sh(script: "docker images --format '{{.Tag}}' ${imageName}", returnStdout: true).trim().split('\n')
-            def latestTag = existingTags.findAll { it =~ /^\d+$/ }.max { it.toInteger() } ?: '0'
-            def newTag = latestTag.toInteger()
-            def fullImageName = "${imageName}:${newTag}"
-            sh "dockle ${fullImageName} || true "
+        stage('Test Docker Image Dockle') {
+            steps {
+                script {
+                    def imageName = 'flare-bank'
+                    def existingTags = sh(script: "docker images --format '{{.Tag}}' ${imageName}", returnStdout: true).trim().split('\n')
+                    def latestTag = existingTags.findAll { it =~ /^\d+$/ }.max { it.toInteger() } ?: '0'
+                    def newTag = latestTag.toInteger()
+                    def fullImageName = "${imageName}:${newTag}"
+                    sh "dockle ${fullImageName} || true "
+                }
+            }
         }
-    }
-}
 
-stage('Test Security Vulnerabilities with Trivy') {
+        stage('Test Security Vulnerabilities with Trivy') {
             steps {
                 script {
                     def imageName = 'flare-bank'
@@ -118,8 +118,6 @@ stage('Test Security Vulnerabilities with Trivy') {
             }
         }
 
-
-         stages {
         stage('Run Docker Container') {
             steps {
                 script {
@@ -141,12 +139,6 @@ stage('Test Security Vulnerabilities with Trivy') {
                 }
             }
         }
-    }
-        
-
-
-
-        
     }
 
     post {
