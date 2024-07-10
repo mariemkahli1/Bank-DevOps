@@ -118,29 +118,29 @@ pipeline {
             }
         }
 
-       stage('Run Docker Container') {
-            steps {
-                script {
-                    // Vérifier si le réseau existe, sinon le créer
-                    def networkExists = sh(script: "docker network ls --filter name=${env.NETWORK_NAME} -q", returnStdout: true).trim()
-                    if (!networkExists) {
-                        sh "docker network create ${env.NETWORK_NAME}"
-                    } else {
-                        echo "Network ${env.NETWORK_NAME} already exists."
-                    }
-
-                    // Vérifier les tags existants de l'image
-                    def latestTag = sh(script: "docker images --format '{{.Tag}}' ${env.IMAGE_NAME} | grep '^[0-9]\\+' | sort -nr | head -n 1", returnStdout: true).trim()
-                    if (!latestTag) {
-                        latestTag = '0'
-                    }
-
-                    // Démarrer le conteneur
-                    sh "docker run -d --network=${env.NETWORK_NAME} --name ${env.CONTAINER_NAME} ${env.IMAGE_NAME}:${latestTag}"
-                    sleep 10
-                }
+      stage('Run Docker Container') {
+    steps {
+        script {
+            // Vérifier si le réseau existe, sinon le créer
+            def networkExists = sh(script: "docker network ls --filter name=${env.NETWORK_NAME} -q", returnStdout: true).trim()
+            if (!networkExists) {
+                sh "docker network create ${env.NETWORK_NAME}"
+            } else {
+                echo "Network ${env.NETWORK_NAME} already exists."
             }
+
+            // Obtenir le dernier tag numérique de l'image
+            def latestTag = sh(script: "docker images --format '{{.Tag}}' ${env.IMAGE_NAME} | grep '^[0-9]\\+' | sort -nr | head -n 1", returnStdout: true).trim()
+            if (!latestTag) {
+                latestTag = 'latest' // Utilisez 'latest' par défaut si aucun tag numérique n'est trouvé
+            }
+
+            // Démarrer le conteneur avec le dernier tag trouvé
+            sh "docker run -d --network=${env.NETWORK_NAME} --name ${env.CONTAINER_NAME} ${env.IMAGE_NAME}:${latestTag}"
+            sleep 10
         }
+    }
+}
     }
 
     post {
