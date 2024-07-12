@@ -150,6 +150,17 @@ pipeline {
             }
         }
 
+
+  /*  stage('Dastardly Security Test') {
+           steps {
+              script {
+             // Run Dastardly against your web application
+                    sh 'docker run --rm -v $(pwd):/dastardly/site/ dastardlyci/dastardly https://localhost' // Change URL to your web application's URL
+                }
+            }
+        } */
+        
+
         stage('Tag and Push') {
             steps {
                 script {
