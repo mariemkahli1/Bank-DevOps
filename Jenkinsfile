@@ -143,17 +143,19 @@ pipeline {
     }
 }
 
-         stage('Login') {
+        stage('Login') {
             steps {
-                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'DOCKERHUB_CREDENTIALS_PSW', usernameVariable: 'DOCKERHUB_CREDENTIALS_USR')]) {
+                    sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+                }
             }
         }
 
-         stage('Push') {
+        stage('Tag and Push') {
             steps {
                 script {
-                sh "docker tag flare-bank:testing mariem820/flare-bank:latest"
-                    sh "docker push mariem820/flare-bank:latest"
+                    sh "docker tag ${IMAGE_NAME}:latest mariem820/${IMAGE_NAME}:latest"
+                    sh "docker push mariem820/${IMAGE_NAME}:latest"
                 }
             }
         }
