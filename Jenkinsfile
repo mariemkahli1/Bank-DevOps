@@ -6,6 +6,7 @@ pipeline {
         CONTAINER_NAME = 'flare-container'
         IMAGE_NAME = 'flare-bank'
         NETWORK_NAME = 'bridge'
+        DOCKERHUB_CREDENTIALS = credentials('mariem-dockerHub')
     }
 
     stages {
@@ -141,6 +142,21 @@ pipeline {
         }
     }
 }
+
+         stage('Login') {
+            steps {
+                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+            }
+        }
+
+         stage('Push') {
+            steps {
+                script {
+                   sh "docker push mariem820/flare-bank:testing"
+                }
+            }
+        }
+
     }
 
     post {
