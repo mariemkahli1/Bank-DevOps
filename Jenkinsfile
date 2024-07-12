@@ -152,7 +152,7 @@ pipeline {
          stage('Push') {
             steps {
                 script {
-                   sh "docker push mariem820/flare-bank:latest"
+                  sh "docker push ${env.IMAGE_NAME}:latest"
                 }
             }
         }
