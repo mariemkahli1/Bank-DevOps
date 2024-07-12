@@ -152,7 +152,8 @@ pipeline {
          stage('Push') {
             steps {
                 script {
-                  sh "docker push ${env.IMAGE_NAME}:latest"
+                sh "docker tag flare-bank:testing mariem820/flare-bank:latest"
+                    sh "docker push mariem820/flare-bank:latest"
                 }
             }
         }
