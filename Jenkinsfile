@@ -152,7 +152,7 @@ pipeline {
          stage('Push') {
             steps {
                 script {
-                   sh "docker push mariem820/flare-bank:testing"
+                   sh "docker push mariem820/flare-bank:latest"
                 }
             }
         }
@@ -161,6 +161,7 @@ pipeline {
 
     post {
         always {
+             sh 'docker logout'
             echo 'Pipeline has finished.'
         }
     }
