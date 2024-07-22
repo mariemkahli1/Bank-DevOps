@@ -1,6 +1,8 @@
 <?php
-include 'header.php';
 include 'connect.php';
+$conn = getConnection();
+
+include 'header.php';
 
 if (isset($_POST['submit'])) {
   $from = (int) $_GET['id'];
