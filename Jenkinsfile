@@ -171,29 +171,33 @@ pipeline {
         }
 
 
-      stage('Deployment') {
+
+        stage('Setup kubectl') {
+    steps {
+        script {
+            sh '''
+                mkdir -p /var/lib/jenkins/.minikube/certs
+                cp /var/lib/minikube/certs/* /var/lib/jenkins/.minikube/certs/
+                export KUBECONFIG=/var/lib/jenkins/.minikube/config
+                kubectl config use-context minikube
+            '''
+        }
+    }
+}
+
+        
+
+     stage('Deployment') {
     steps {
         script {
             // Configure Minikube environment
             sh 'eval $(minikube docker-env)'
 
-            // Vérifiez que le contexte kubectl est correct
-            sh 'kubectl config use-context minikube'
-            sh 'kubectl config current-context'
+            // Désactiver la vérification TLS (en dernier recours)
+            sh 'kubectl apply -f deployment.yaml --validate=false --insecure-skip-tls-verify'
+            sh 'kubectl apply -f service.yaml --validate=false --insecure-skip-tls-verify'
 
-            // Vérifiez que Minikube est opérationnel
-            sh 'kubectl get nodes'
-
-            // Pull the image from Docker Hub
-            sh 'docker pull mariem820/flare-bank:latest'
-
-            // Apply the Kubernetes Deployment
-            sh 'kubectl apply -f deployment.yaml --validate=false'
-
-            // Apply the Kubernetes Service
-            sh 'kubectl apply -f service.yaml --validate=false'
-
-            // Get the service URL
+            // Obtenir l'URL du service
             def serviceUrl = sh(script: 'minikube service flare-bank-service --url', returnStdout: true).trim()
             echo "Application is accessible at: ${serviceUrl}"
         }
