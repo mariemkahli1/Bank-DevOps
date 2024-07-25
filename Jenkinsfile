@@ -179,10 +179,14 @@ pipeline {
                 // Vérifier si Minikube est démarré
                 def minikubeStatus = sh(script: 'minikube status --format "{{.Host}} {{.Kubelet}} {{.APIServer}}"', returnStdout: true).trim()
                 if (!minikubeStatus.contains("Running")) {
-                    error "Minikube is not running. Start Minikube before deploying."
+                    echo "Minikube is not running. Starting Minikube..."
+                    sh 'minikube start'
                 }
 
+                // Configurer l'environnement Docker pour Minikube
                 sh 'eval $(minikube docker-env)'
+                
+                // Tirer la dernière image Docker
                 sh 'docker pull mariem820/flare-bank:latest'
 
                 // Appliquer les fichiers YAML de déploiement et de service
@@ -198,7 +202,7 @@ pipeline {
             }
         }
     }
-       }
+}
 
 
 
