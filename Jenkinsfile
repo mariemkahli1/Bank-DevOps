@@ -171,27 +171,34 @@ pipeline {
         }
 
 
-       stage('Deployment') {
-            steps {
-                script {
-                    // Configure Minikube environment
-                    sh 'eval $(minikube docker-env)'
+      stage('Deployment') {
+    steps {
+        script {
+            // Configure Minikube environment
+            sh 'eval $(minikube docker-env)'
 
-                    // Pull the image from Docker Hub
-                    sh 'docker pull mariem820/flare-bank:latest'
+            // Vérifiez que le contexte kubectl est correct
+            sh 'kubectl config use-context minikube'
+            sh 'kubectl config current-context'
 
-                    // Apply the Kubernetes Deployment
-                    sh 'kubectl apply -f deployment.yaml'
+            // Vérifiez que Minikube est opérationnel
+            sh 'kubectl get nodes'
 
-                    // Apply the Kubernetes Service
-                    sh 'kubectl apply -f service.yaml'
+            // Pull the image from Docker Hub
+            sh 'docker pull mariem820/flare-bank:latest'
 
-                    // Get the service URL
-                    def serviceUrl = sh(script: 'minikube service flare-bank-service --url', returnStdout: true).trim()
-                    echo "Application is accessible at: ${serviceUrl}"
-                }
-            }
+            // Apply the Kubernetes Deployment
+            sh 'kubectl apply -f deployment.yaml --validate=false'
+
+            // Apply the Kubernetes Service
+            sh 'kubectl apply -f service.yaml --validate=false'
+
+            // Get the service URL
+            def serviceUrl = sh(script: 'minikube service flare-bank-service --url', returnStdout: true).trim()
+            echo "Application is accessible at: ${serviceUrl}"
         }
+    }
+}
 
 
 
