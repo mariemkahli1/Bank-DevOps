@@ -197,7 +197,7 @@ stage('Deployment') {
                 sh 'kubectl apply -f service.yaml --validate=false'
 
                 def url = sh(script: 'minikube service flare-bank-service --url', returnStdout: true).trim()
-                echo "Application is accessible at: ${url}"
+                echo "Application is accessible at: ${url} || true"
             } catch (err) {
                 echo "Error deploying to Minikube: ${err}"
                 currentBuild.result = 'FAILURE'
