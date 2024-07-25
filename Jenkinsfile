@@ -170,34 +170,41 @@ pipeline {
             }
         }
 
-stage('Deployment') {
-    steps {
-        script {
-            echo 'Start deploying'
-            try {
-                // Vérifiez si Minikube est démarré
-                def minikubeStatus = sh(script: 'minikube status --format "{{.Host}} {{.Kubelet}} {{.APIServer}}"', returnStdout: true).trim()
-                if (!minikubeStatus.contains("Running")) {
-                    error "Minikube is not running. Start Minikube before deploying."
+
+        stage('Deployment') {
+            steps {
+                script {
+                    echo 'Start deploying'
+                    try {
+                        // Démarrer Minikube si ce n'est pas déjà fait
+                        def minikubeProfileExists = sh(script: 'minikube profile list', returnStdout: true).contains('minikube')
+                        if (!minikubeProfileExists) {
+                            sh 'minikube start'
+                        }
+
+                        // Vérifier si Minikube est démarré
+                        def minikubeStatus = sh(script: 'minikube status --format "{{.Host}} {{.Kubelet}} {{.APIServer}}"', returnStdout: true).trim()
+                        if (!minikubeStatus.contains("Running")) {
+                            error "Minikube is not running. Start Minikube before deploying."
+                        }
+
+                        sh 'eval $(minikube docker-env)'
+                        sh 'docker pull mariem820/flare-bank:latest'
+
+                        // Appliquer les fichiers YAML de déploiement et de service
+                        sh 'kubectl apply -f deployment.yaml --validate=false'
+                        sh 'kubectl apply -f service.yaml --validate=false'
+
+                        def url = sh(script: 'minikube service flare-bank-service --url', returnStdout: true).trim()
+                        echo "Application is accessible at: ${url}"
+                    } catch (err) {
+                        echo "Error deploying to Minikube: ${err}"
+                        currentBuild.result = 'FAILURE'
+                        error "Deployment to Minikube failed."
+                    }
                 }
-
-                sh 'eval $(minikube docker-env)'
-                sh 'docker pull mariem820/flare-bank:latest'
-
-                // Appliquer les fichiers YAML de déploiement et de service
-                sh 'kubectl apply -f deployment.yaml --validate=false'
-                sh 'kubectl apply -f service.yaml --validate=false'
-
-                def url = sh(script: 'minikube service flare-bank-service --url', returnStdout: true).trim()
-                echo "Application is accessible at: ${url}"
-            } catch (err) {
-                echo "Error deploying to Minikube: ${err}"
-                currentBuild.result = 'FAILURE'
-                error "Deployment to Minikube failed."
             }
         }
-    }
-}
 
 
 
