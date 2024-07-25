@@ -172,13 +172,16 @@ pipeline {
 
 
 
-    stage('Deployment') {
+stage('Kubernetes Deployment') {
     steps {
         script {
             // Configure Minikube environment
             sh 'eval $(minikube docker-env)'
 
-            // Appliquer les configurations avec validation TLS désactivée
+            // Configurer le contexte Kubernetes
+            sh 'kubectl config use-context minikube'
+
+            // Appliquer les configurations Kubernetes
             sh 'kubectl apply -f deployment.yaml --validate=false --insecure-skip-tls-verify'
             sh 'kubectl apply -f service.yaml --validate=false --insecure-skip-tls-verify'
 
@@ -188,6 +191,7 @@ pipeline {
         }
     }
 }
+
 
 
 
