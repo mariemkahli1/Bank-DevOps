@@ -170,15 +170,21 @@ pipeline {
             }
         }
 
-                stage('Deployment') {
+stage('Deployment') {
     steps {
         script {
             echo 'Start deploying'
             try {
+                // Vérifiez si Minikube est démarré
+                def minikubeStatus = sh(script: 'minikube status --format "{{.Host}} {{.Kubelet}} {{.APIServer}}"', returnStdout: true).trim()
+                if (!minikubeStatus.contains("Running")) {
+                    error "Minikube is not running. Start Minikube before deploying."
+                }
+
                 sh 'eval $(minikube docker-env)'
                 sh 'docker pull mariem820/flare-bank:latest'
 
-                // Apply deployment and service YAML files
+                // Appliquer les fichiers YAML de déploiement et de service
                 sh 'kubectl apply -f deployment.yaml --validate=false'
                 sh 'kubectl apply -f service.yaml --validate=false'
 
@@ -192,6 +198,11 @@ pipeline {
         }
     }
 }
+
+
+
+
+        
     }
 
     post {
