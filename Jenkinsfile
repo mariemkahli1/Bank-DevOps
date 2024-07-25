@@ -172,28 +172,13 @@ pipeline {
 
 
 
-        stage('Setup kubectl') {
-    steps {
-        script {
-            sh '''
-                mkdir -p /var/lib/jenkins/.minikube/certs
-                cp /var/lib/minikube/certs/* /var/lib/jenkins/.minikube/certs/
-                export KUBECONFIG=/var/lib/jenkins/.minikube/config
-                kubectl config use-context minikube
-            '''
-        }
-    }
-}
-
-        
-
-     stage('Deployment') {
+    stage('Deployment') {
     steps {
         script {
             // Configure Minikube environment
             sh 'eval $(minikube docker-env)'
 
-            // Désactiver la vérification TLS (en dernier recours)
+            // Appliquer les configurations avec validation TLS désactivée
             sh 'kubectl apply -f deployment.yaml --validate=false --insecure-skip-tls-verify'
             sh 'kubectl apply -f service.yaml --validate=false --insecure-skip-tls-verify'
 
