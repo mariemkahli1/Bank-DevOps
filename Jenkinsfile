@@ -171,15 +171,17 @@ pipeline {
         }
 
 
-       stage('Deployment') {
+      stage('Deployment') {
     steps {
         script {
             echo 'Start deploying'
             try {
-                // Vérifier si Minikube est démarré
-                def minikubeStatus = sh(script: 'minikube status --format "{{.Host}} {{.Kubelet}} {{.APIServer}}"', returnStdout: true).trim()
-                if (!minikubeStatus.contains("Running")) {
-                    echo "Minikube is not running. Starting Minikube..."
+                // Vérifier si Minikube est démarré, sinon le démarrer
+                def minikubeProfile = sh(script: 'minikube profile list | grep minikube || true', returnStdout: true).trim()
+                if (minikubeProfile.contains("Running")) {
+                    echo "Minikube is already running."
+                } else {
+                    echo "Starting Minikube..."
                     sh 'minikube start'
                 }
 
@@ -203,6 +205,7 @@ pipeline {
         }
     }
 }
+
 
 
 
