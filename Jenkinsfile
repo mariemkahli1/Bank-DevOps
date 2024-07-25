@@ -192,6 +192,21 @@ stage('Deployment') {
                 sh 'kubectl apply -f deployment.yaml --validate=false'
                 sh 'kubectl apply -f service.yaml --validate=false'
 
+                // Attendre que les pods soient prêts
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitUntil {
+                        def podsReady = sh(script: 'kubectl get pods -l app=flare-bank -o jsonpath="{.items[*].status.containerStatuses[*].ready}"', returnStdout: true).trim()
+                        return podsReady.contains('true')
+                    }
+                }
+
+                // Afficher l'état des pods
+                sh 'kubectl get pods -o wide'
+
+                // Afficher les logs des pods
+                sh 'kubectl logs -l app=flare-bank'
+
+                // Obtenir l'URL du service
                 def url = sh(script: 'minikube service flare-bank-service --url', returnStdout: true).trim()
                 echo "Application is accessible at: ${url} || true"
             } catch (err) {
@@ -202,6 +217,7 @@ stage('Deployment') {
         }
     }
 }
+
 
 
 
