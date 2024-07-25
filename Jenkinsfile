@@ -171,7 +171,7 @@ pipeline {
         }
 
 
-        stage('Deployment') {
+         stage('Deployment') {
             steps {
                 script {
                     echo 'Start deploying'
