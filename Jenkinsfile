@@ -177,14 +177,10 @@ stage('Deployment') {
         script {
             echo 'Start deploying'
             try {
-                // Vérifier si Minikube est démarré, sinon le démarrer
-                def minikubeProfile = sh(script: 'minikube profile list | grep minikube || true', returnStdout: true).trim()
-                if (minikubeProfile.contains("Running")) {
-                    echo "Minikube is already running."
-                } else {
-                    echo "Starting Minikube..."
-                    sh 'minikube start'
-                }
+                // Supprimer et recréer Minikube pour éviter les problèmes de configuration
+                echo "Deleting and recreating Minikube..."
+                sh 'minikube delete || true'
+                sh 'minikube start --driver=docker'
 
                 // Configurer l'environnement Docker pour Minikube
                 sh 'eval $(minikube docker-env)'
@@ -206,6 +202,7 @@ stage('Deployment') {
         }
     }
 }
+
 
 
 
