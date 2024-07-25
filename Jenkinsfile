@@ -172,22 +172,37 @@ pipeline {
 
 
 
-stage('Kubernetes Deployment') {
+stage('Deployment') {
     steps {
         script {
-            // Configure Minikube environment
-            sh 'eval $(minikube docker-env)'
+            echo 'Start deploying'
+            try {
+                // Vérifier si Minikube est démarré, sinon le démarrer
+                def minikubeProfile = sh(script: 'minikube profile list | grep minikube || true', returnStdout: true).trim()
+                if (minikubeProfile.contains("Running")) {
+                    echo "Minikube is already running."
+                } else {
+                    echo "Starting Minikube..."
+                    sh 'minikube start'
+                }
 
-            // Configurer le contexte Kubernetes
-            sh 'kubectl config use-context minikube'
+                // Configurer l'environnement Docker pour Minikube
+                sh 'eval $(minikube docker-env)'
+                
+                // Tirer la dernière image Docker
+                sh 'docker pull mariem820/flare-bank:latest'
 
-            // Appliquer les configurations Kubernetes
-            sh 'kubectl apply -f deployment.yaml --validate=false --insecure-skip-tls-verify'
-            sh 'kubectl apply -f service.yaml --validate=false --insecure-skip-tls-verify'
+                // Appliquer les fichiers YAML de déploiement et de service
+                sh 'kubectl apply -f deployment.yaml --validate=false'
+                sh 'kubectl apply -f service.yaml --validate=false'
 
-            // Obtenir l'URL du service
-            def serviceUrl = sh(script: 'minikube service flare-bank-service --url', returnStdout: true).trim()
-            echo "Application is accessible at: ${serviceUrl}"
+                def url = sh(script: 'minikube service flare-bank-service --url', returnStdout: true).trim()
+                echo "Application is accessible at: ${url}"
+            } catch (err) {
+                echo "Error deploying to Minikube: ${err}"
+                currentBuild.result = 'FAILURE'
+                error "Deployment to Minikube failed."
+            }
         }
     }
 }
