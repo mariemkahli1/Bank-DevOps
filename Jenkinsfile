@@ -221,7 +221,7 @@ stage('Deployment') {
 
 
 
-          stages {
+         
         stage('Setup Prometheus and Grafana') {
             steps {
                 script {
@@ -264,7 +264,7 @@ stage('Deployment') {
                 }
             }
         }
-    }
+    
 
 
         
