@@ -221,25 +221,36 @@ stage('Deployment') {
 
 
 
+          stages {
         stage('Setup Prometheus and Grafana') {
             steps {
                 script {
                     // Add Helm repositories
-                    sh 'helm repo add prometheus-community https://prometheus-community.github.io/helm-charts'
-                    sh 'helm repo add grafana https://grafana.github.io/helm-charts'
+                    sh 'helm repo add prometheus-community https://prometheus-community.github.io/helm-charts || true'
+                    sh 'helm repo add grafana https://grafana.github.io/helm-charts || true'
                     sh 'helm repo update'
                     
                     // Create namespace for monitoring
                     echo 'Creating namespace for monitoring...'
                     sh 'kubectl create namespace monitoring || true'
                     
-                    // Install Prometheus
-                    echo 'Installing Prometheus...'
-                    sh 'helm install prometheus prometheus-community/prometheus --namespace monitoring'
+                    // Install or upgrade Prometheus
+                    echo 'Installing or upgrading Prometheus...'
+                    def prometheusExists = sh(script: 'helm ls -n monitoring | grep prometheus', returnStatus: true) == 0
+                    if (prometheusExists) {
+                        sh 'helm upgrade prometheus prometheus-community/prometheus --namespace monitoring'
+                    } else {
+                        sh 'helm install prometheus prometheus-community/prometheus --namespace monitoring'
+                    }
                     
-                    // Install Grafana
-                    echo 'Installing Grafana...'
-                    sh 'helm install grafana grafana/grafana --namespace monitoring'
+                    // Install or upgrade Grafana
+                    echo 'Installing or upgrading Grafana...'
+                    def grafanaExists = sh(script: 'helm ls -n monitoring | grep grafana', returnStatus: true) == 0
+                    if (grafanaExists) {
+                        sh 'helm upgrade grafana grafana/grafana --namespace monitoring'
+                    } else {
+                        sh 'helm install grafana grafana/grafana --namespace monitoring'
+                    }
                     
                     // Wait for Prometheus and Grafana to be ready
                     echo 'Waiting for Grafana and Prometheus to be ready...'
@@ -253,10 +264,7 @@ stage('Deployment') {
                 }
             }
         }
-
-
-
-
+    }
 
 
         
