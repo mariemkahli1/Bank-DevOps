@@ -221,6 +221,56 @@ stage('Deployment') {
 
 
 
+        
+        stage('Setup Prometheus and Grafana') {
+            steps {
+                script {
+                    try {
+                        echo "Adding Helm repositories..."
+                        sh 'helm repo add prometheus-community https://prometheus-community.github.io/helm-charts'
+                        sh 'helm repo add grafana https://grafana.github.io/helm-charts'
+                        sh 'helm repo update'
+                        
+                        echo "Creating namespace for monitoring..."
+                        sh 'kubectl create namespace monitoring || true'
+                        
+                        echo "Installing Prometheus..."
+                        sh 'helm install prometheus prometheus-community/prometheus --namespace monitoring'
+                        
+                        echo "Installing Grafana..."
+                        sh 'helm install grafana grafana/grafana --namespace monitoring'
+                        
+                        echo "Waiting for Grafana and Prometheus to be ready..."
+                        timeout(time: 5, unit: 'MINUTES') {
+                            waitUntil {
+                                def grafanaReady = sh(script: 'kubectl get pods -n monitoring -l app.kubernetes.io/name=grafana -o jsonpath="{.items[*].status.containerStatuses[*].ready}"', returnStdout: true).trim()
+                                def prometheusReady = sh(script: 'kubectl get pods -n monitoring -l app.kubernetes.io/name=prometheus-server -o jsonpath="{.items[*].status.containerStatuses[*].ready}"', returnStdout: true).trim()
+                                return grafanaReady.contains('true') && prometheusReady.contains('true')
+                            }
+                        }
+
+                        echo "Setting up port-forward for Prometheus..."
+                        sh 'kubectl --namespace monitoring port-forward svc/prometheus-server 9090:80 &'
+                        
+                        echo "Setting up port-forward for Grafana..."
+                        sh 'kubectl --namespace monitoring port-forward svc/grafana 3000:80 &'
+
+                        echo "Getting Grafana admin password..."
+                        def grafanaAdminPassword = sh(script: 'kubectl get secret --namespace monitoring grafana -o jsonpath="{.data.admin-password}" | base64 --decode', returnStdout: true).trim()
+                        echo "Grafana Admin Password: ${grafanaAdminPassword}"
+                        
+                    } catch (err) {
+                        echo "Error setting up Prometheus and Grafana: ${err}"
+                        currentBuild.result = 'FAILURE'
+                        error "Setup of Prometheus and Grafana failed."
+                    }
+                }
+            }
+        }
+        
+
+
+
 
 
 
