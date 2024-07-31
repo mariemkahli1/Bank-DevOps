@@ -229,7 +229,7 @@ stage('Deployment') {
 
 
 
-        stage('Setup Monitoring') {
+ stage('Setup Monitoring') {
             steps {
                 script {
                     echo 'Setting up Prometheus and Grafana for monitoring...'
@@ -243,8 +243,8 @@ stage('Deployment') {
                         sh 'helm repo update'
 
                         // Installer ou mettre à jour Prometheus et Grafana
-                        sh 'helm install prometheus prometheus-community/prometheus --namespace monitoring || true'
-                        sh 'helm install grafana grafana/grafana --namespace monitoring || true'
+                        sh 'helm upgrade --install prometheus prometheus-community/prometheus --namespace monitoring'
+                        sh 'helm upgrade --install grafana grafana/grafana --namespace monitoring'
                         
                         // Attendre que les pods soient prêts
                         timeout(time: 15, unit: 'MINUTES') {
@@ -259,19 +259,22 @@ stage('Deployment') {
 
                         // Exécuter le port-forwarding en arrière-plan
                         sh '''
-                        nohup kubectl --namespace monitoring port-forward svc/prometheus-server 9090:80 > /dev/null 2>&1 &
-                        nohup kubectl --namespace monitoring port-forward svc/grafana 3000:80 > /dev/null 2>&1 &
-                        sleep 10  # Ajouter un délai pour s'assurer que le port-forwarding est actif
+                        nohup kubectl --namespace monitoring port-forward svc/prometheus-server 9090:80 > prometheus_port_forward.log 2>&1 &
+                        nohup kubectl --namespace monitoring port-forward svc/grafana 3000:80 > grafana_port_forward.log 2>&1 &
                         '''
+                        
+                        sleep 10
 
-                        echo 'Setup complete. You can access Prometheus at http://localhost:9090 and Grafana at http://localhost:3000.'
+                        // Vérifier les logs de port-forwarding
+                        sh 'tail -n 20 prometheus_port_forward.log'
+                        sh 'tail -n 20 grafana_port_forward.log'
+                        
+                        // Afficher les services Prometheus et Grafana
+                        sh 'kubectl get svc --namespace monitoring'
                     } catch (err) {
-                        echo "Error setting up Prometheus and Grafana: ${err}"
-                        sh 'kubectl get pods --namespace monitoring -o wide'
-                        sh 'kubectl logs -n monitoring -l "app.kubernetes.io/name=prometheus"'
-                        sh 'kubectl logs -n monitoring -l "app.kubernetes.io/name=grafana"'
+                        echo "Error setting up monitoring: ${err}"
                         currentBuild.result = 'FAILURE'
-                        error "Monitoring setup failed."
+                        error "Setup of Prometheus and Grafana failed."
                     }
                 }
             }
