@@ -224,7 +224,7 @@ stage('Deployment') {
 
 
          
-       stage('Install Helm') {
+    /*   stage('Install Helm') {
             steps {
                 script {
                     // Installer Helm si ce n'est pas déjà fait
@@ -295,7 +295,7 @@ stage('Deployment') {
             }
         }
     
-    
+    */
 
 
         
