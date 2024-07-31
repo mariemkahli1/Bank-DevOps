@@ -222,38 +222,66 @@ stage('Deployment') {
 
 
          
-       stage('Setup Prometheus and Grafana') {
+       stage('Add Helm Repositories') {
             steps {
                 script {
-                    // Add Helm repositories
                     sh 'helm repo add prometheus-community https://prometheus-community.github.io/helm-charts || true'
                     sh 'helm repo add grafana https://grafana.github.io/helm-charts || true'
                     sh 'helm repo update'
+                }
+            }
+        }
 
-                    // Create namespace for monitoring
-                    echo 'Creating namespace for monitoring...'
+        stage('Create Namespace') {
+            steps {
+                script {
                     sh 'kubectl create namespace monitoring || true'
+                }
+            }
+        }
 
-                    // Install or upgrade Prometheus
-                    echo 'Installing or upgrading Prometheus...'
+        stage('Install or Upgrade Prometheus') {
+            steps {
+                script {
                     sh 'helm upgrade --install prometheus prometheus-community/prometheus --namespace monitoring'
+                }
+            }
+        }
 
-                    // Install or upgrade Grafana
-                    echo 'Installing or upgrading Grafana...'
+        stage('Install or Upgrade Grafana') {
+            steps {
+                script {
                     sh 'helm upgrade --install grafana grafana/grafana --namespace monitoring'
+                }
+            }
+        }
 
-                    // Wait for Prometheus and Grafana to be ready
-                    echo 'Waiting for Grafana and Prometheus to be ready...'
-                    timeout(time: 10, unit: 'MINUTES') {
-                        waitUntil {
-                            def prometheusReady = sh(script: 'kubectl get pods -n monitoring -l app.kubernetes.io/name=prometheus-server -o jsonpath="{.items[*].status.containerStatuses[*].ready}"', returnStdout: true).trim()
-                            def grafanaReady = sh(script: 'kubectl get pods -n monitoring -l app.kubernetes.io/name=grafana -o jsonpath="{.items[*].status.containerStatuses[*].ready}"', returnStdout: true).trim()
-                            return (prometheusReady == 'true' && grafanaReady == 'true')
+        stage('Wait for Pods to be Ready') {
+            steps {
+                script {
+                    def timeout = 10 * 60 // Timeout en secondes
+                    def startTime = System.currentTimeMillis()
+
+                    while (true) {
+                        def elapsedTime = (System.currentTimeMillis() - startTime) / 1000
+                        if (elapsedTime > timeout) {
+                            error "Le délai d'attente pour les pods a expiré."
                         }
+
+                        def prometheusReady = sh(script: 'kubectl get pods -n monitoring -l app.kubernetes.io/name=prometheus-server -o jsonpath={.items[*].status.containerStatuses[*].ready}', returnStatus: true) == 0
+                        def grafanaReady = sh(script: 'kubectl get pods -n monitoring -l app.kubernetes.io/name=grafana -o jsonpath={.items[*].status.containerStatuses[*].ready}', returnStatus: true) == 0
+
+                        if (prometheusReady && grafanaReady) {
+                            echo 'Tous les pods sont prêts.'
+                            break
+                        }
+
+                        sleep(time: 15, unit: 'SECONDS')
                     }
                 }
             }
         }
+    
     
     
 
