@@ -224,76 +224,7 @@ stage('Deployment') {
 
 
          
-   /*   stage('Install Helm') {
-            steps {
-                script {
-                    // Installer Helm si ce n'est pas déjà fait
-                    sh '''
-                    curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-                    '''
-                }
-            }
-        }
-        stage('Add Helm Repositories') {
-            steps {
-                script {
-                    sh '''
-                    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts || true
-                    helm repo add grafana https://grafana.github.io/helm-charts || true
-                    helm repo update
-                    '''
-                }
-            }
-        }
-        stage('Create Namespace') {
-            steps {
-                script {
-                    sh '''
-                    kubectl create namespace monitoring || true
-                    '''
-                }
-            }
-        }
-        stage('Install or Upgrade Prometheus') {
-            steps {
-                script {
-                    sh '''
-                    helm upgrade --install prometheus prometheus-community/prometheus --namespace monitoring
-                    '''
-                }
-            }
-        }
-        stage('Install or Upgrade Grafana') {
-            steps {
-                script {
-                    sh '''
-                    helm upgrade --install grafana grafana/grafana --namespace monitoring
-                    '''
-                }
-            }
-        }
-        stage('Wait for Pods to be Ready') {
-            steps {
-                script {
-                    // Attendre que les pods soient prêts
-                    sh '''
-                    kubectl rollout status deployment/prometheus-server -n monitoring
-                    kubectl rollout status deployment/grafana -n monitoring
-                    '''
-                }
-            }
-        }
-        stage('Port Forwarding Prometheus and Grafana') {
-            steps {
-                script {
-                    // Exécuter le port-forwarding en arrière-plan
-                    sh '''
-                    nohup bash -c "kubectl port-forward $(kubectl get pods --namespace monitoring -l app.kubernetes.io/name=prometheus-server -o jsonpath='{.items[0].metadata.name}') 9090:9090" &
-                    nohup bash -c "kubectl port-forward $(kubectl get pods --namespace monitoring -l app.kubernetes.io/name=grafana -o jsonpath='{.items[0].metadata.name}') 3000:3000" &
-                    '''
-                }
-            }
-        }   */
+   
 
 
 
