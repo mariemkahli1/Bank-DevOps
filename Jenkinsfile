@@ -7,8 +7,8 @@ pipeline {
         IMAGE_NAME = 'flare-bank'
         NETWORK_NAME = 'bridge'
         DOCKERHUB_CREDENTIALS = credentials('mariem-dockerHub')
-        HELM_VERSION = '3.8.0' // Spécifiez la version de Helm si nécessaire
-        KUBECONFIG = '/root/.kube/config' // Chemin vers le fichier kubeconfig
+       // HELM_VERSION = '3.8.0' // Spécifiez la version de Helm si nécessaire
+       // KUBECONFIG = '/root/.kube/config' // Chemin vers le fichier kubeconfig
     }
 
     stages {
@@ -224,7 +224,7 @@ stage('Deployment') {
 
 
          
-    /*   stage('Install Helm') {
+      stage('Install Helm') {
             steps {
                 script {
                     // Installer Helm si ce n'est pas déjà fait
@@ -295,7 +295,7 @@ stage('Deployment') {
             }
         }
     
-    */
+    
 
 
         
