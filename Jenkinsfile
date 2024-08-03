@@ -201,13 +201,7 @@ pipeline {
 }
 
 
-
-
-
-
-        
-
-     /*   stage('Tag and Push') {
+ stage('Tag and Push') {
             steps {
                 script {
                     sh "docker tag ${IMAGE_NAME}:latest mariem820/${IMAGE_NAME}:latest"
@@ -262,68 +256,8 @@ stage('Deployment') {
             }
         }
     }
-} */
+} 
 
-
-
-
-         
-   
-
-
-
-
-/* stage('Setup Monitoring') {
-            environment {
-                KUBECONFIG = credentials('kubeconfig') // Référence au credential kubeconfig
-            }
-            steps {
-                script {
-                    sh '''
-                    #!/bin/bash
-
-                    set -e
-
-                    # Créer le namespace si nécessaire
-                    kubectl create namespace monitoring || true
-
-                    # Ajouter les dépôts Helm
-                    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts || true
-                    helm repo add grafana https://grafana.github.io/helm-charts || true
-                    helm repo update
-
-                    # Installer ou mettre à jour Prometheus et Grafana
-                    helm upgrade --install prometheus prometheus-community/prometheus --namespace monitoring
-                    helm upgrade --install grafana grafana/grafana --namespace monitoring
-
-                    # Attendre que les pods soient prêts
-                    echo "Waiting for Prometheus and Grafana pods to be ready..."
-                    timeout 15m bash -c 'until kubectl get pods --namespace monitoring -l "app.kubernetes.io/name=prometheus" -o jsonpath="{.items[*].status.containerStatuses[*].ready}" | grep -q "true"; do sleep 10; done'
-                    timeout 15m bash -c 'until kubectl get pods --namespace monitoring -l "app.kubernetes.io/name=grafana" -o jsonpath="{.items[*].status.containerStatuses[*].ready}" | grep -q "true"; do sleep 10; done'
-
-                    # Exécuter le port-forwarding en arrière-plan
-                    kubectl --namespace monitoring port-forward svc/prometheus-server 9090:80 > prometheus_port_forward.log 2>&1 &
-                    kubectl --namespace monitoring port-forward svc/grafana 3000:80 > grafana_port_forward.log 2>&1 &
-
-                    sleep 10
-
-                    # Vérifier les logs de port-forwarding
-                    tail -n 20 prometheus_port_forward.log
-                    tail -n 20 grafana_port_forward.log
-
-                    # Afficher les services Prometheus et Grafana
-                    kubectl get svc --namespace monitoring
-
-                    echo "Prometheus and Grafana setup complete."
-                    '''
-                }
-            }
-        } */
-    
-    
-
-
-        
     }
 
     post {
