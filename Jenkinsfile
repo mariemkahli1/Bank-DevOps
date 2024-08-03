@@ -161,6 +161,51 @@ pipeline {
                 }
             }
         } */
+
+
+ stage('Setup Monitoring') {
+            steps {
+                script {
+                    echo 'Setting up Prometheus and Grafana for monitoring...'
+                    try {
+                        sh 'kubectl create namespace monitoring || true'
+                        sh 'helm repo add prometheus-community https://prometheus-community.github.io/helm-charts'
+                        sh 'helm repo add grafana https://grafana.github.io/helm-charts'
+                        sh 'helm repo update'
+                        sh 'helm install prometheus prometheus-community/prometheus --namespace monitoring || true'
+                        sh 'helm install grafana grafana/grafana --namespace monitoring || true'
+                        
+                        timeout(time: 15, unit: 'MINUTES') {
+                            waitUntil {
+                                def prometheusStatus = sh(script: 'kubectl get pods --namespace monitoring -l "app=prometheus" -o jsonpath="{.items[*].status.containerStatuses[*].ready}"', returnStdout: true).trim()
+                                def grafanaStatus = sh(script: 'kubectl get pods --namespace monitoring -l "app.kubernetes.io/name=grafana" -o jsonpath="{.items[*].status.containerStatuses[*].ready}"', returnStdout: true).trim()
+                                echo "Prometheus status: ${prometheusStatus}"
+                                echo "Grafana status: ${grafanaStatus}"
+                                return prometheusStatus.contains('true') && grafanaStatus.contains('true')
+                            }
+                        }
+
+                        sh 'kubectl --namespace monitoring port-forward svc/prometheus-server 9090:80 &'
+                        sh 'kubectl --namespace monitoring port-forward svc/grafana 3000:80 &'
+
+                        echo 'Setup complete. You can access Prometheus at http://localhost:9090 and Grafana at http://localhost:3000.'
+                    } catch (err) {
+                        echo "Error setting up Prometheus and Grafana: ${err}"
+                        sh 'kubectl get pods --namespace monitoring -o wide'
+                        sh 'kubectl logs -n monitoring -l "app=prometheus"'
+                        sh 'kubectl logs -n monitoring -l "app.kubernetes.io/name=grafana"'
+                        currentBuild.result = 'FAILURE'
+                        error "Monitoring setup failed."
+                    }
+                }
+            }
+        }
+
+
+
+
+
+
         
 
         stage('Tag and Push') {
@@ -229,7 +274,7 @@ stage('Deployment') {
 
 
 
-stage('Setup Monitoring') {
+/* stage('Setup Monitoring') {
             environment {
                 KUBECONFIG = credentials('kubeconfig') // Référence au credential kubeconfig
             }
@@ -274,7 +319,7 @@ stage('Setup Monitoring') {
                     '''
                 }
             }
-        }
+        } */
     
     
 
