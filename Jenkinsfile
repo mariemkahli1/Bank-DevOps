@@ -8,7 +8,7 @@ pipeline {
         NETWORK_NAME = 'bridge'
         DOCKERHUB_CREDENTIALS = credentials('mariem-dockerHub')
        // HELM_VERSION = '3.8.0' // Spécifiez la version de Helm si nécessaire
-         KUBECONFIG = credentials('kubeconfig')
+         // KUBECONFIG = credentials('kubeconfig')
     }
 
     stages {
