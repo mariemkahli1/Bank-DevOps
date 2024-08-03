@@ -8,7 +8,7 @@ pipeline {
         NETWORK_NAME = 'bridge'
         DOCKERHUB_CREDENTIALS = credentials('mariem-dockerHub')
        // HELM_VERSION = '3.8.0' // Spécifiez la version de Helm si nécessaire
-       // KUBECONFIG = '/root/.kube/config' // Chemin vers le fichier kubeconfig
+         KUBECONFIG = credentials('kubeconfig')
     }
 
     stages {
@@ -232,54 +232,47 @@ stage('Deployment') {
  stage('Setup Monitoring') {
             steps {
                 script {
-                    echo 'Setting up Prometheus and Grafana for monitoring...'
-                    try {
-                        // Créer le namespace si nécessaire
-                        sh 'kubectl create namespace monitoring || true'
+                    sh '''
+                    #!/bin/bash
 
-                        // Ajouter les dépôts Helm
-                        sh 'helm repo add prometheus-community https://prometheus-community.github.io/helm-charts || true'
-                        sh 'helm repo add grafana https://grafana.github.io/helm-charts || true'
-                        sh 'helm repo update'
+                    set -e
 
-                        // Installer ou mettre à jour Prometheus et Grafana
-                        sh 'helm upgrade --install prometheus prometheus-community/prometheus --namespace monitoring'
-                        sh 'helm upgrade --install grafana grafana/grafana --namespace monitoring'
-                        
-                        // Attendre que les pods soient prêts
-                        timeout(time: 15, unit: 'MINUTES') {
-                            waitUntil {
-                                def prometheusStatus = sh(script: 'kubectl get pods --namespace monitoring -l "app.kubernetes.io/name=prometheus" -o jsonpath="{.items[*].status.containerStatuses[*].ready}"', returnStdout: true).trim()
-                                def grafanaStatus = sh(script: 'kubectl get pods --namespace monitoring -l "app.kubernetes.io/name=grafana" -o jsonpath="{.items[*].status.containerStatuses[*].ready}"', returnStdout: true).trim()
-                                echo "Prometheus status: ${prometheusStatus}"
-                                echo "Grafana status: ${grafanaStatus}"
-                                return prometheusStatus.contains('true') && grafanaStatus.contains('true')
-                            }
-                        }
+                    # Créer le namespace si nécessaire
+                    kubectl create namespace monitoring || true
 
-                        // Exécuter le port-forwarding en arrière-plan
-                        sh '''
-                        nohup kubectl --namespace monitoring port-forward svc/prometheus-server 9090:80 > prometheus_port_forward.log 2>&1 &
-                        nohup kubectl --namespace monitoring port-forward svc/grafana 3000:80 > grafana_port_forward.log 2>&1 &
-                        '''
-                        
-                        sleep 10
+                    # Ajouter les dépôts Helm
+                    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts || true
+                    helm repo add grafana https://grafana.github.io/helm-charts || true
+                    helm repo update
 
-                        // Vérifier les logs de port-forwarding
-                        sh 'tail -n 20 prometheus_port_forward.log'
-                        sh 'tail -n 20 grafana_port_forward.log'
-                        
-                        // Afficher les services Prometheus et Grafana
-                        sh 'kubectl get svc --namespace monitoring'
-                    } catch (err) {
-                        echo "Error setting up monitoring: ${err}"
-                        currentBuild.result = 'FAILURE'
-                        error "Setup of Prometheus and Grafana failed."
-                    }
+                    # Installer ou mettre à jour Prometheus et Grafana
+                    helm upgrade --install prometheus prometheus-community/prometheus --namespace monitoring
+                    helm upgrade --install grafana grafana/grafana --namespace monitoring
+
+                    # Attendre que les pods soient prêts
+                    echo "Waiting for Prometheus and Grafana pods to be ready..."
+                    timeout 15m bash -c 'until kubectl get pods --namespace monitoring -l "app.kubernetes.io/name=prometheus" -o jsonpath="{.items[*].status.containerStatuses[*].ready}" | grep -q "true"; do sleep 10; done'
+                    timeout 15m bash -c 'until kubectl get pods --namespace monitoring -l "app.kubernetes.io/name=grafana" -o jsonpath="{.items[*].status.containerStatuses[*].ready}" | grep -q "true"; do sleep 10; done'
+
+                    # Exécuter le port-forwarding en arrière-plan
+                    kubectl --namespace monitoring port-forward svc/prometheus-server 9090:80 > prometheus_port_forward.log 2>&1 &
+                    kubectl --namespace monitoring port-forward svc/grafana 3000:80 > grafana_port_forward.log 2>&1 &
+
+                    sleep 10
+
+                    # Vérifier les logs de port-forwarding
+                    tail -n 20 prometheus_port_forward.log
+                    tail -n 20 grafana_port_forward.log
+
+                    # Afficher les services Prometheus et Grafana
+                    kubectl get svc --namespace monitoring
+
+                    echo "Prometheus and Grafana setup complete."
+                    '''
                 }
             }
         }
-        
+    
     
     
 
