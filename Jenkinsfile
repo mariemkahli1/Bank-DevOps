@@ -229,7 +229,10 @@ stage('Deployment') {
 
 
 
- stage('Setup Monitoring') {
+stage('Setup Monitoring') {
+            environment {
+                KUBECONFIG = credentials('kubeconfig') // Référence au credential kubeconfig
+            }
             steps {
                 script {
                     sh '''
@@ -272,7 +275,6 @@ stage('Deployment') {
                 }
             }
         }
-    
     
     
 
