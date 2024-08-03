@@ -207,7 +207,7 @@ pipeline {
 
         
 
-        stage('Tag and Push') {
+     /*   stage('Tag and Push') {
             steps {
                 script {
                     sh "docker tag ${IMAGE_NAME}:latest mariem820/${IMAGE_NAME}:latest"
@@ -262,7 +262,7 @@ stage('Deployment') {
             }
         }
     }
-}
+} */
 
 
 
