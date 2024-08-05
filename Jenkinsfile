@@ -221,7 +221,7 @@ stage('Deployment') {
 }
 
 
-           stage('Setup Monitoring') {
+          stage('Setup Monitoring') {
             steps {
                 script {
                     echo 'Setting up Prometheus and Grafana for monitoring...'
@@ -243,6 +243,7 @@ stage('Deployment') {
                             }
                         }
 
+                        // Port forwarding pour accéder à Prometheus et Grafana
                         sh 'kubectl --namespace monitoring port-forward svc/prometheus-server 9090:80 &'
                         sh 'kubectl --namespace monitoring port-forward svc/grafana 3000:80 &'
 
@@ -256,8 +257,10 @@ stage('Deployment') {
                 }
             }
         }
-    
 
+
+
+        
     }
 
     post {
