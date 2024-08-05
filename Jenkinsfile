@@ -221,7 +221,7 @@ stage('Deployment') {
 }
 
 
-        stage('Setup Monitoring') {
+           stage('Setup Monitoring') {
             steps {
                 script {
                     echo 'Setting up Prometheus and Grafana for monitoring...'
@@ -256,6 +256,7 @@ stage('Deployment') {
                 }
             }
         }
+    }
 
     }
 
