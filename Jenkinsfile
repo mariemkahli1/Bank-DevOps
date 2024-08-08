@@ -100,7 +100,7 @@ pipeline {
         stage('Dockle Docker Image analysis') {
             steps {
                 script {
-                    sh "dockle flare-bank:testing || true"
+                    sh "dockle flare-bank:latest || true"
                 }
             }
         }
