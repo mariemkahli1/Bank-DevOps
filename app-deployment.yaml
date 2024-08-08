@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flare-bank-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flare-bank
+  template:
+    metadata:
+      labels:
+        app: flare-bank
+    spec:
+      containers:
+        - name: flare-bank
+          image: mariem820/flare-bank:latest
+          ports:
+            - containerPort: 80
