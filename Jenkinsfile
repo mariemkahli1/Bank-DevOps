@@ -21,6 +21,7 @@ pipeline {
                     } catch (err) {
                         echo "PHPStan analysis encountered errors but continuing..."
                     }
+                    sh 'cp metrics.php src/'
                 }
             }
         }
@@ -96,27 +97,18 @@ pipeline {
             }
         }
 
-        stage('Dockle Docker Image Test') {
+        stage('Dockle Docker Image analysis') {
             steps {
                 script {
-                    def imageName = 'flare-bank'
-                    def existingTags = sh(script: "docker images --format '{{.Tag}}' ${imageName}", returnStdout: true).trim().split('\n')
-                    def latestTag = existingTags.findAll { it =~ /^\d+$/ }.max { it.toInteger() } ?: '0'
-                    def newTag = latestTag.toInteger()
-                    def fullImageName = "${imageName}:${newTag}"
-                    sh "dockle ${fullImageName} || true"
+                    sh "dockle flare-bank:testing || true"
                 }
             }
         }
 
-        stage('Test Security Trivy') {
+          stage('Test Security Trivy') {
             steps {
                 script {
-                    def imageName = 'flare-bank'
-                    def existingTags = sh(script: "docker images --format '{{.Tag}}' ${imageName}", returnStdout: true).trim().split('\n')
-                    def latestTag = existingTags.findAll { it =~ /^\d+$/ }.max { it.toInteger() } ?: '0'
-                    def newTag = latestTag.toInteger()
-                    sh "trivy image --severity CRITICAL ${imageName}:${newTag} || true"
+                    sh "trivy image --severity CRITICAL flare-bank:testing || true"
                 }
             }
         }
@@ -221,44 +213,47 @@ stage('Deployment') {
 }
 
 
-          stage('Setup Monitoring') {
+         stage('Monitoring Setup') {
             steps {
                 script {
-                    echo 'Setting up Prometheus and Grafana for monitoring...'
+                    echo 'Setting up Prometheus and Grafana'
                     try {
-                        sh 'kubectl create namespace monitoring || true'
-                        sh 'helm repo add prometheus-community https://prometheus-community.github.io/helm-charts'
-                        sh 'helm repo add grafana https://grafana.github.io/helm-charts'
-                        sh 'helm repo update'
-                        sh 'helm install prometheus prometheus-community/prometheus --namespace monitoring || true'
-                        sh 'helm install grafana grafana/grafana --namespace monitoring || true'
-                        
-                        timeout(time: 15, unit: 'MINUTES') {
+                        sh 'kubectl apply -f prometheus-deployment.yaml --validate=false'
+                        sh 'kubectl apply -f prometheus-configmap.yaml --validate=false'
+                        sh 'kubectl apply -f prometheus-service.yaml --validate=false'
+                        sh 'kubectl apply -f grafana-deployment.yaml --validate=false'
+                        sh 'kubectl apply -f grafana-service.yaml --validate=false'
+
+                        timeout(time: 10, unit: 'MINUTES') {
                             waitUntil {
-                                def prometheusStatus = sh(script: 'kubectl get pods --namespace monitoring -l "app=prometheus" -o jsonpath="{.items[*].status.containerStatuses[*].ready}"', returnStdout: true).trim()
-                                def grafanaStatus = sh(script: 'kubectl get pods --namespace monitoring -l "app.kubernetes.io/name=grafana" -o jsonpath="{.items[*].status.containerStatuses[*].ready}"', returnStdout: true).trim()
-                                echo "Prometheus status: ${prometheusStatus}"
-                                echo "Grafana status: ${grafanaStatus}"
-                                return prometheusStatus.contains('true') && grafanaStatus.contains('true')
+                                def prometheusReady = sh(script: 'kubectl get pods -l app=prometheus -o jsonpath="{.items[*].status.phase}"', returnStdout: true).trim()
+                                def grafanaReady = sh(script: 'kubectl get pods -l app=grafana -o jsonpath="{.items[*].status.phase}"', returnStdout: true).trim()
+                                return prometheusReady.contains('Running') && grafanaReady.contains('Running')
                             }
                         }
 
-                        // Port forwarding pour accéder à Prometheus et Grafana
-                        sh 'kubectl --namespace monitoring port-forward svc/prometheus-server 9090:80 &'
-                        sh 'kubectl --namespace monitoring port-forward svc/grafana 3000:80 &'
+                        def prometheusNodePort = sh(script: 'kubectl get svc prometheus-service -o jsonpath="{.spec.ports[0].nodePort}"', returnStdout: true).trim()
+                        def grafanaNodePort = sh(script: 'kubectl get svc grafana-service -o jsonpath="{.spec.ports[0].nodePort}"', returnStdout: true).trim()
+                        def minikubeIp = sh(script: 'minikube ip', returnStdout: true).trim()
 
-                        echo 'Setup complete. You can access Prometheus at http://localhost:9090 and Grafana at http://localhost:3000.'
+                        if (!prometheusNodePort || !grafanaNodePort) {
+                            error "Failed to retrieve NodePorts for Prometheus and/or Grafana services."
+                        }
+
+                        def prometheusUrl = "http://${minikubeIp}:${prometheusNodePort}"
+                        def grafanaUrl = "http://${minikubeIp}:${grafanaNodePort}"
+
+                        echo "Prometheus is accessible at: ${prometheusUrl}"
+                        echo "Grafana is accessible at: ${grafanaUrl}"
+
                     } catch (err) {
                         echo "Error setting up Prometheus and Grafana: ${err}"
-                        sh 'kubectl get all --namespace monitoring'
                         currentBuild.result = 'FAILURE'
-                        error "Failed to set up Prometheus and Grafana."
+                        error "Setup of Prometheus and Grafana failed."
                     }
                 }
             }
         }
-
-
 
         
     }
