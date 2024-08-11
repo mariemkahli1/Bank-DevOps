@@ -33,6 +33,7 @@ function getConnection() {
     $user = $_ENV['DB_USER'];
     $password = $_ENV['DB_PASSWORD'];
     $database = $_ENV['DB_DATABASE'];
+    echo  $host;
     $conn = new mysqli($host, $user, $password, $database, $port);
     if ($conn->connect_error) {
         die("Connection failed: " . $conn->connect_error);
