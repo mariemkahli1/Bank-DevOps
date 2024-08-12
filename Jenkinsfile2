@@ -6,10 +6,10 @@ pipeline {
         string(name: 'SCRIPT_NAME', defaultValue: 'index.php', description: 'Name of the PHP script to run')
     }
 
-   environment {
-    DOCKER_HUB_CREDENTIALS = credentials('mariem-dockerHub') // Docker Hub credentials ID
-    DOCKER_IMAGE_NAME = 'mariem/flare-bank'
-}
+    environment {
+        DOCKER_HUB_CREDENTIALS = credentials('mariem-dockerHub') // Docker Hub credentials ID
+        DOCKER_IMAGE_NAME = 'mariem/flare-bank'
+    }
 
     stages {
         stage('Checkout') {
@@ -77,7 +77,7 @@ pipeline {
             }
         }
 
-     /*    stage('Push Docker Image') {
+        stage('Push Docker Image') {
             steps {
                 script {
                     // Se connecter à Docker Hub et pousser l'image
@@ -86,30 +86,7 @@ pipeline {
                     }
                 }
             }
-        }*/
-
- stage('Login') {
-            steps {
-                script {
-                    sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
-                }
-            }
         }
-
-stage('Push Docker Image') {
-    steps {
-        script {
-            // Se connecter à Docker Hub et pousser l'image
-            docker.withRegistry('https://index.docker.io/v1/', 'mariem-dockerHub') {
-                docker.image(env.DOCKER_IMAGE).push('latest')
-            }
-        }
-    }
-}
-
-
-
-
     }
 
     post {
