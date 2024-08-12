@@ -18,10 +18,27 @@ pipeline {
             }
         }
 
+        stage('Prepare Environment') {
+            steps {
+                script {
+                    // Vérifier si le fichier .env existe, sinon le créer
+                    if (!fileExists('.env')) {
+                        writeFile file: '.env', text: '''
+                        # Ajouter ici vos variables d'environnement par défaut
+                        APP_ENV=production
+                        DB_HOST=localhost
+                        DB_USER=root
+                        DB_PASSWORD=secret
+                        '''
+                    }
+                }
+            }
+        }
+
         stage('Generate Dockerfile') {
             steps {
                 script {
-                    // Generate Dockerfile dynamically
+                    // Générer le Dockerfile dynamiquement
                     def copyCommands = ''
                     def directories = params.APP_DIRECTORIES.split(',')
 
@@ -54,7 +71,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Build Docker image
+                    // Construire l'image Docker
                     docker.build(env.DOCKER_IMAGE)
                 }
             }
@@ -63,9 +80,8 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    // Log in to Docker Hub
+                    // Se connecter à Docker Hub et pousser l'image
                     docker.withRegistry('https://index.docker.io/v1/', 'mariem-dockerHub') {
-                        // Push Docker image
                         docker.image(env.DOCKER_IMAGE).push('latest')
                     }
                 }
