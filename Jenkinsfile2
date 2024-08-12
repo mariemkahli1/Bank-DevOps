@@ -77,16 +77,16 @@ pipeline {
             }
         }
 
-        stage('Push Docker Image') {
-            steps {
-                script {
-                    // Se connecter à Docker Hub et pousser l'image
-                    docker.withRegistry('https://index.docker.io/v1/', 'mariem-dockerHub') {
-                        docker.image(env.DOCKER_IMAGE).push('latest')
-                    }
-                }
+stage('Push Docker Image') {
+    steps {
+        script {
+            // Se connecter à Docker Hub et pousser l'image
+            docker.withRegistry('https://index.docker.io/v1/', 'mariem-dockerHub') {
+                docker.image(env.DOCKER_IMAGE).push('latest')
             }
         }
+    }
+}
     }
 
     post {
