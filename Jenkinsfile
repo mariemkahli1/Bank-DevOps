@@ -62,7 +62,32 @@ pipeline {
             }
         }
 
-        stage('Hadolint Dockerfile analysis') {
+
+
+ stage('Lint Dockerfile hadolint') {
+            steps {
+                script {
+                    echo 'Linting Dockerfile...'
+                    try {
+                        def hadolintOutput = sh(returnStdout: true, script: 'hadolint --config hadolint.yaml Dockerfile || true').trim()
+                        if (hadolintOutput) {
+                            error "Dockerfile linting failed:\n${hadolintOutput}"
+                        } else {
+                            echo 'Dockerfile linting passed.'
+                        }
+                    } catch (err) {
+                        echo "Error during Dockerfile linting: ${err}"
+                        currentBuild.result = 'FAILURE'
+                        error "Dockerfile linting failed."
+                    }
+                }
+            }
+        }
+
+
+        
+
+      /*  stage('Hadolint Dockerfile analysis') {
             steps {
                 script {
                     def hadolintOutput = sh(returnStdout: true, script: 'hadolint --config hadolint.yaml Dockerfile || true').trim()
@@ -73,7 +98,7 @@ pipeline {
                     }
                 }
             }
-        }
+        } */
 
         stage('Create .env File') {
             steps {
