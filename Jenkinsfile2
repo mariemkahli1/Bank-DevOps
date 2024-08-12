@@ -80,16 +80,29 @@ pipeline {
         stage('Login to Docker Hub') {
             steps {
                 script {
-                    sh 'echo $DOCKER_HUB_CREDENTIALS_PSW | docker login -u $DOCKER_HUB_CREDENTIALS_USR --password-stdin'
+                    withCredentials([usernamePassword(credentialsId: 'mariem-dockerHub', passwordVariable: 'DOCKER_HUB_PASSWORD', usernameVariable: 'DOCKER_HUB_USERNAME')]) {
+                        sh 'echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin'
+                    }
                 }
             }
         }
 
-        stage('Tag and Push Docker Image') {
+        stage('Test Docker Login') {
             steps {
                 script {
-                    sh "docker tag ${DOCKER_IMAGE_NAME}:latest mariem/flare-bank:latest"
-                    sh "docker push mariem/flare-bank:latest"
+                    sh 'docker info'
+                }
+            }
+        }
+
+        stage('Tag and Push') {
+            steps {
+                script {
+                    // Tagger l'image Docker
+                    sh "docker tag ${DOCKER_IMAGE_NAME}:latest mariem/${DOCKER_IMAGE_NAME}:latest"
+
+                    // Pousser l'image Docker sur Docker Hub
+                    sh "docker push mariem/${DOCKER_IMAGE_NAME}:latest"
                 }
             }
         }
