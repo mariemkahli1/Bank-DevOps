@@ -6,10 +6,10 @@ pipeline {
         string(name: 'SCRIPT_NAME', defaultValue: 'index.php', description: 'Name of the PHP script to run')
     }
 
-    environment {
-        DOCKER_HUB_CREDENTIALS = credentials('mariem-dockerHub') // Docker Hub credentials ID
-        DOCKER_IMAGE_NAME = 'flare-bank'
-    }
+   environment {
+    DOCKER_HUB_CREDENTIALS = credentials('mariem-dockerHub') // Docker Hub credentials ID
+    DOCKER_IMAGE_NAME = 'mariem/flare-bank'
+}
 
     stages {
         stage('Checkout') {
