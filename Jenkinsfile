@@ -64,7 +64,7 @@ pipeline {
 
 
 
- stage('Lint Dockerfile hadolint') {
+ stage('Hadolint Dockerfile analysis') {
             steps {
                 script {
                     echo 'Linting Dockerfile...'
@@ -87,18 +87,7 @@ pipeline {
 
         
 
-      /*  stage('Hadolint Dockerfile analysis') {
-            steps {
-                script {
-                    def hadolintOutput = sh(returnStdout: true, script: 'hadolint --config hadolint.yaml Dockerfile || true').trim()
-                    if (hadolintOutput) {
-                        error "Error: Dockerfile linting failed:\n${hadolintOutput}"
-                    } else {
-                        echo 'Dockerfile linting passed'
-                    }
-                }
-            }
-        } */
+    
 
         stage('Create .env File') {
             steps {
