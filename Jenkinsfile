@@ -48,22 +48,7 @@ pipeline {
         }
         
 
-      /*  stage('SCM') {
-            steps {
-                checkout scm
-            }
-        }
-
-        stage('SonarQube Analysis') {
-            steps {
-                script {
-                    def scannerHome = tool 'Sonar';
-                    withSonarQubeEnv('sonar1') {
-                        sh "${scannerHome}/bin/sonar-scanner"
-                    }
-                }
-            }
-        } */
+    
 
         stage("Quality Gate") {
             steps {
