@@ -98,7 +98,7 @@ pipeline {
         stage('Tag and Push') {
             steps {
                 script {
-                    // Tagger l'image Docker
+                    // Tagger l'image Docker correctement
                     sh "docker tag ${DOCKER_IMAGE_NAME}:latest mariem/${DOCKER_IMAGE_NAME}:latest"
 
                     // Pousser l'image Docker sur Docker Hub
