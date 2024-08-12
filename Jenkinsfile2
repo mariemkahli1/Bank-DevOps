@@ -77,16 +77,22 @@ pipeline {
             }
         }
 
-stage('Push Docker Image') {
-    steps {
-        script {
-            // Se connecter à Docker Hub et pousser l'image
-            docker.withRegistry('https://index.docker.io/v1/', 'mariem-dockerHub') {
-                docker.image(env.DOCKER_IMAGE).push('latest')
+        stage('Login to Docker Hub') {
+            steps {
+                script {
+                    sh 'echo $DOCKER_HUB_CREDENTIALS_PSW | docker login -u $DOCKER_HUB_CREDENTIALS_USR --password-stdin'
+                }
             }
         }
-    }
-}
+
+        stage('Tag and Push Docker Image') {
+            steps {
+                script {
+                    sh "docker tag ${DOCKER_IMAGE_NAME}:latest mariem/flare-bank:latest"
+                    sh "docker push mariem/flare-bank:latest"
+                }
+            }
+        }
     }
 
     post {
