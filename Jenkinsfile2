@@ -5,17 +5,23 @@ pipeline {
         text(name: 'APP_DIRECTORIES', defaultValue: 'src/', description: 'Comma-separated list of directories/files to copy into Docker image')
         string(name: 'SCRIPT_NAME', defaultValue: 'index.php', description: 'Name of the PHP script to run')
 
-        // Active Choices Parameter pour générer la liste des versions PHP
-        activeChoiceParam('PHP_VERSION') {
-            description('Sélectionnez la version PHP')
-            choiceType('SINGLE_SELECT')
-            groovyScript {
-                script("""
-                    return ['php:7.4-apache', 'php:8.0-apache', 'php:8.1-apache', 'php:8.2-apache']
-                """)
-                fallbackScript("return ['php:8.1-apache']")
-            }
-        }
+        // Ajout du paramètre Active Choices
+        activeChoice(
+            choiceType: 'PT_SINGLE_SELECT', 
+            description: 'Récupération dynamique test', 
+            filterLength: 1, 
+            filterable: false, 
+            name: 'RecuperationDynamique', 
+            randomName: 'choice-parameter-15987625882066', 
+            script: groovyScript(
+                fallbackScript: '''
+                return ["Option1", "Option2", "Option3"]
+                ''', 
+                script: '''
+                return ["OptionA", "OptionB", "OptionC"]
+                '''
+            )
+        )
     }
 
     environment {
@@ -59,7 +65,7 @@ pipeline {
                     }
 
                     writeFile file: 'Dockerfile', text: """
-                    FROM ${params.PHP_VERSION}
+                    FROM ${params.BASE_IMAGE}
                     ${copyCommands}
                     WORKDIR /var/www/html
                     RUN docker-php-ext-install mysqli pdo pdo_mysql
