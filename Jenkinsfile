@@ -134,7 +134,7 @@ pipeline {
             }
         }
 
-        stage('Run Docker Container') {
+      /*  stage('Run Docker Container') {
             steps {
                 script {
                     // Vérifier si le réseau existe, sinon le créer
@@ -155,7 +155,7 @@ pipeline {
                     sh "docker run -d --network=${env.NETWORK_NAME} --name ${env.CONTAINER_NAME} ${env.IMAGE_NAME}:${latestTag}"
                 }
             }
-        }
+        } */
 
         stage('Login') {
             steps {
